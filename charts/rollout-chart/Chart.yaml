@@ -1,6 +1,6 @@
 apiVersion: v2
-name: chart
-description: A Helm chart for Kubernetes
+name: rollout-chart
+description: A Helm chart for Kubernetes with Argo-rollout
 
 # A chart can be either an 'application' or a 'library' chart.
 #
