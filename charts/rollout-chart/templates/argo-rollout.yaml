@@ -42,7 +42,7 @@ spec:
         {{- include "chart.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - image: {{ .Values.image.repository }}:{{ .Values.image.rolloutTag}}"
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.rolloutTag}}"
           name: {{ .Chart.Name }}
           ports:
             - name: http
