@@ -1,0 +1,166 @@
+# Default values for chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # The tag will be the current version if .Values.rolloutStrategy is none
+  # Otherwise tag will be the previous version while rolloutTag will be the current version
+  rolloutStrategy: none # canary|canary|blueGreen
+  tag: latest
+  rolloutTag: latest
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+probe: {}
+  # livenessProbe:
+  #   httpGet:
+  #     path: /health
+  #     port: http
+  # readinessProbe:
+  #   httpGet:
+  #     path: /readiness
+  #     port: http
+terminationGracePeriodSeconds: 30
+lifecycle: {}
+  # postStart:
+  #   exec:
+  #     command: ["/bin/sh", "-c", "date > /container-started.txt"]
+  # preStop:
+  #   exec:
+  #     command: ["/usr/sbin/nginx", "-s", "quit"]
+
+customLabels: {}
+  # Specifies custom labels for additional selectorLabels
+  # project: example
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+  requests:
+    cpu: 10m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+rollout:
+  canary:
+    autoPromotionEnabled: true
+    analysisTemplate:
+      metrics:
+        - name: pass
+          count: 1
+          interval: 5s
+          failureLimit: 1
+          provider:
+            job:
+              spec:
+                template:
+                  spec:
+                    containers:
+                    - name: sleep
+                      image: alpine:3.8
+                      command: [sh, -c]
+                      args: [exit 0]
+                    restartPolicy: Never
+                backoffLimit: 0
+        # - name: success-rate
+        #   interval: 5m
+        #   # NOTE: prometheus queries return results in the form of a vector.
+        #   # So it is common to access the index 0 of the returned array to obtain the value
+        #   successCondition: result[0] >= 0.95
+        #   failureLimit: 3
+        #   provider:
+        #     prometheus:
+        #       address: http://prometheus.example.com:9090
+        #       query: |
+        #         sum(irate(
+        #           istio_requests_total{reporter="source",destination_service=~"{{args.service-name}}",response_code!~"5.*"}[5m]
+        #         )) /
+        #         sum(irate(
+        #           istio_requests_total{reporter="source",destination_service=~"{{args.service-name}}"}[5m]
+        #         ))
+    steps:
+      - setWeight: 20
+      - pause:
+          duration: 5m
+      - analysis: {}
+      - setWeight: 40
+      - pause:
+          duration: 10
+      - setWeight: 60
+      - pause:
+          duration: 10
+      - setWeight: 80
+      - pause:
+          duration: 10
+  blueGreen:
+    autoPromotionEnabled: true
+    prePromotionAnalysis:
+      metrics:
+      - name: request-success-rate
+        threshold: 99
+        interval: 60s
+    prePromotionGates:
+      conditions:
+      - type: AnalysisSuccessful
+    scaleDownDelayRevisionLimit: 0

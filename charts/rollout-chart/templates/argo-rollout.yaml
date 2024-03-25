@@ -1,0 +1,53 @@
+{{- if or (eq .Values.image.rolloutStrategy "canary") (eq .Values.image.rolloutStrategy "blueGreen") }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "chart.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- else }}
+  replicas: {{ .Values.autoscaling.minReplicas }}
+  {{- end }}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      {{- include "chart.selectorLabels" . | nindent 6 }}
+  strategy:
+    {{- if eq .Values.image.rolloutStrategy "canary" }}
+    canary:
+      steps:
+        {{- range $steps := .Values.rollout.canary.steps }}
+        {{- if hasKey $steps "analysis" }}
+        - analysis:
+            templates:
+              - templateName: {{ include "chart.fullname" $ }}-success-rate
+        {{- else }}
+        - {{ toYaml $steps | nindent 10 }}
+        {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- if eq .Values.image.rolloutStrategy "blueGreen" }}
+    blueGreen:
+      {{- with .Values.rollout.blueGreen }}
+      {{- toYaml . | nindent 6 }}
+      activeService: {{ include "chart.fullname" $ }}
+      previewService: {{ include "chart.fullname" $ }}-preview
+      {{- end }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - image: {{ .Values.image.repository }}:{{ .Values.image.rolloutTag}}"
+          name: {{ .Chart.Name }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+{{- end }}

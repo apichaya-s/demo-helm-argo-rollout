@@ -1,0 +1,12 @@
+{{- if and (ne .Values.image.rolloutStrategy "none" ) .Values.rollout.canary.autoPromotionEnabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ include "chart.fullname" . }}-analysis
+spec:
+  args:
+  - name: service-name
+    value: {{ include "chart.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  metrics:
+    {{- toYaml .Values.rollout.canary.analysisTemplate.metrics | nindent 4 }}
+{{- end }}
