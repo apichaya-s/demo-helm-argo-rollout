@@ -1,0 +1,20 @@
+# To run this manually to all git tracked files use `pre-commit run -a` command
+# Note that it will not work with untracked files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: debug-statements
+  # brew install norwoodj/tap/helm-docs
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: v1.13.1
+    hooks:
+      - id: helm-docs
+        args:
+          - --template-files=README.md.gotmpl
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.23
+    hooks:
+      - id: helmlint
