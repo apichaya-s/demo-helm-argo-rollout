@@ -22,7 +22,7 @@ spec:
         {{- if hasKey $steps "analysis" }}
         - analysis:
             templates:
-              - templateName: {{ include "chart.fullname" $ }}-success-rate
+              - templateName: {{ include "chart.fullname" $ }}-analysis
         {{- else }}
         - {{ toYaml $steps | nindent 10 }}
         {{- end }}
