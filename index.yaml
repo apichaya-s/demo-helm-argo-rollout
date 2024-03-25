@@ -11,4 +11,15 @@ entries:
     urls:
     - chart-0.1.0.tgz
     version: 0.1.0
-generated: "2024-03-25T06:27:23.805009216Z"
+  rollout-chart:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2024-03-25T06:47:05.908274067Z"
+    description: A Helm chart for Kubernetes with Argo-rollout
+    digest: 5de27e7361e6d724c384658213e97d4b72a072eab9254954b67da916035e84dc
+    name: rollout-chart
+    type: application
+    urls:
+    - rollout-chart-0.1.0.tgz
+    version: 0.1.0
+generated: "2024-03-25T06:47:05.908285418Z"
